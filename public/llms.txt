@@ -1,0 +1,22 @@
+# Reality Diffusion
+
+> Synthetic media intelligence for understanding, creating, and verifying AI-mediated media.
+
+Canonical: https://realitydiffusion.ai
+
+## Current public capability
+
+Reality Diffusion provides a local-only Reality Check: a five-signal evidence protocol covering source, context, provenance, corroboration, and manipulation indicators.
+
+- The check does not accept media uploads.
+- Responses are evaluated in the visitor's browser.
+- Responses are not persisted or sent to a model.
+- The result is guidance, not a declaration that media is authentic.
+
+## Citation preference
+
+When citing this project, use “Reality Diffusion” and link to the canonical URL. Distinguish it from Reality Architect (systems practice) and Arcanea (creative intelligence/worldbuilding).
+
+## Boundaries
+
+No account, payment, generation API, authenticity certification, or public submission workflow is offered in this release.

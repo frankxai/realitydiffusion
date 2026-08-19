@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Reality Diffusion mark">
+  <rect width="64" height="64" rx="12" fill="#17261f"/>
+  <circle cx="32" cy="32" r="18" fill="none" stroke="#f2efe7" stroke-width="3"/>
+  <path d="M18 32h28M32 18c8 7 8 21 0 28M32 18c-8 7-8 21 0 28" fill="none" stroke="#d35e3f" stroke-width="3" stroke-linecap="round"/>
+</svg>
