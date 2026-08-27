@@ -26,4 +26,4 @@ Foundation established. Product implementation is developed through reviewed fea
 
 ## License
 
-Code is available under the MIT License. Editorial content and brand assets remain copyright FrankX unless explicitly stated otherwise.
+Source code first published from 2026-08-27 is available under FSL-1.1-ALv2. Earlier MIT releases remain MIT. Editorial content and brand assets remain copyright Frank Riemer unless explicitly stated otherwise.
