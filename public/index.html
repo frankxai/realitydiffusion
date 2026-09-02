@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-ancestors 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="description" content="Reality Check: an evidence protocol for assessing synthetic or manipulated media. Runs entirely in your browser. Nothing is uploaded.">
+<title>Reality Check — Reality Diffusion</title>
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+<a class="skip" href="#workbench">Skip to the workbench</a>
+
+<header class="masthead">
+  <p class="wordmark">Reality Diffusion</p>
+  <h1>Reality Check</h1>
+  <p class="standfirst">An evidence protocol for deciding what you can responsibly say about a photograph, a clip, or a voice note. It runs in this browser tab. The media never leaves your device, because it never enters this page.</p>
+  <ul class="promises">
+    <li><span>No upload.</span> You describe what you examined; you never hand over the file.</li>
+    <li><span>No detector.</span> This product runs no model on your media and makes no detection claim.</li>
+    <li><span>No verdict.</span> Every claim comes out as a banded lean with a ceiling, an alternative explanation, and the thing that would overturn it.</li>
+  </ul>
+</header>
+
+<main id="workbench">
+  <section class="panel" aria-labelledby="h-case">
+    <h2 id="h-case"><span class="step">1</span> The case</h2>
+    <p class="lede">Write down what you are looking at and how it reached you, before you look for anything. Chain of custody outranks every judgement you can make about pixels.</p>
+    <div class="grid">
+      <p class="field"><label for="f-title">Case title</label>
+        <input id="f-title" name="title" type="text" autocomplete="off" placeholder="Clip of the harbour fire, posted 2 September"></p>
+      <p class="field"><label for="f-kind">Material</label>
+        <select id="f-kind" name="kind">
+          <option value="image">Image</option>
+          <option value="video">Video</option>
+          <option value="audio">Audio</option>
+          <option value="text">Text</option>
+          <option value="document">Document</option>
+          <option value="composite">Composite</option>
+        </select></p>
+      <p class="field"><label for="f-surfaced">Where it surfaced</label>
+        <input id="f-surfaced" type="text" autocomplete="off" placeholder="Reposted on a public feed"></p>
+      <p class="field"><label for="f-origin">What the poster claims it is</label>
+        <input id="f-origin" type="text" autocomplete="off" placeholder="Filmed by the poster this morning"></p>
+      <p class="field"><label for="f-custody">Chain of custody</label>
+        <select id="f-custody">
+          <option value="unknown">Unknown</option>
+          <option value="direct-from-source">Direct from the person who says they captured it</option>
+          <option value="one-hop">One hop</option>
+          <option value="multi-hop">Multiple hops</option>
+        </select></p>
+      <p class="field"><label for="f-recompression">Known re-encoding</label>
+        <select id="f-recompression">
+          <option value="unknown">Unknown</option>
+          <option value="none-known">None known</option>
+          <option value="platform-reencoded">Platform re-encoded</option>
+          <option value="screenshot-of-screen">Screenshot or recording of a screen</option>
+        </select></p>
+      <p class="field field--wide"><label for="f-descriptor">What you examined</label>
+        <input id="f-descriptor" type="text" autocomplete="off" placeholder="Twelve-second clip, 720p, shared without sound"></p>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-claim">
+    <h2 id="h-claim"><span class="step">2</span> The claim under test</h2>
+    <p class="lede">Not "is this AI". A claim you could be wrong about in a way someone could show: that the scene was not captured where and when it is said to have been, that the material was generated rather than recorded, that a real recording has been materially altered.</p>
+    <p class="field field--wide"><label for="f-claim">Claim</label>
+      <textarea id="f-claim" rows="2" placeholder="This clip was not filmed at the harbour on 2 September as stated."></textarea></p>
+    <p class="field field--wide"><label for="f-falsifier">What would settle it</label>
+      <input id="f-falsifier" type="text" autocomplete="off" placeholder="The original file from the person who filmed it"></p>
+    <p class="warning" id="certainty-warning" role="status" hidden></p>
+  </section>
+
+  <section class="panel" aria-labelledby="h-checklist">
+    <h2 id="h-checklist"><span class="step">3</span> The checklist</h2>
+    <p class="lede">Answer only what you actually checked. <em>Unknown</em> is a real answer and it is scored as one: it dilutes the result rather than being quietly dropped. Each question carries the innocent explanations that produce the same observation.</p>
+    <div id="checklist"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-alternatives">
+    <h2 id="h-alternatives"><span class="step">4</span> Alternative explanations</h2>
+    <p class="lede">Every innocent account of what you observed, carried forward. Closing one requires a reason. While any remain open, the reading is capped below its top band — deliberately.</p>
+    <div id="alternatives"><p class="empty">Answer a question above and the alternative explanations that come with it will appear here.</p></div>
+  </section>
+
+  <section class="panel panel--reading" aria-labelledby="h-reading">
+    <h2 id="h-reading"><span class="step">5</span> The reading</h2>
+    <div id="reading" aria-live="polite"></div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-decision">
+    <h2 id="h-decision"><span class="step">6</span> Decision and export</h2>
+    <p class="lede">The decision is about what you will do, not about what is true.</p>
+    <div class="grid">
+      <p class="field"><label for="f-disposition">Disposition</label>
+        <select id="f-disposition">
+          <option value="insufficient-evidence">Insufficient evidence</option>
+          <option value="seek-more-evidence">Seek more evidence</option>
+          <option value="hold-do-not-publish">Hold, do not publish</option>
+          <option value="publish-with-caveats">Publish with caveats</option>
+          <option value="escalate-to-specialist">Escalate to a specialist</option>
+        </select></p>
+      <p class="field"><label for="f-reviewer">Reviewer</label>
+        <input id="f-reviewer" type="text" autocomplete="off" placeholder="Your name or desk"></p>
+      <p class="field field--wide"><label for="f-rationale">Rationale</label>
+        <textarea id="f-rationale" rows="2" placeholder="Held pending the original file; the earlier copy needs a second archive."></textarea></p>
+    </div>
+    <div class="actions">
+      <button type="button" id="btn-md">Export report (Markdown)</button>
+      <button type="button" id="btn-json">Export record (JSON)</button>
+      <button type="button" id="btn-copy">Copy report to clipboard</button>
+      <button type="button" id="btn-reset" class="quiet">Clear this case</button>
+    </div>
+    <p class="note" id="export-note" role="status"></p>
+    <details class="preview">
+      <summary>Preview the report</summary>
+      <pre id="preview" tabindex="0"></pre>
+    </details>
+  </section>
+
+  <section class="panel" aria-labelledby="h-teaching">
+    <h2 id="h-teaching">Failure modes in this method</h2>
+    <p class="lede">The catalogue of ways this work goes wrong. The ones your own answers exposed you to are marked.</p>
+    <div id="failure-modes"></div>
+  </section>
+</main>
+
+<footer class="colophon">
+  <h2>What this is not</h2>
+  <p>Reality Diffusion does not claim reliable detection of AI-generated media, and this page performs none. Detection claims require measured error rates on media resembling the open web; the evidence that would have to exist before we made one is written down in <code>BENCHMARK-PLAN.md</code> in the source repository.</p>
+  <p>Reality Check is separate from Reality Architect, which is about personal operating methods, and from Arcanea, which is about creative work. This surface has one job.</p>
+  <h2>Investigator pack</h2>
+  <p>A paid pack for investigators and newsrooms — second-reviewer workflow, case bundles, the failure-mode training set — is being built. The waitlist opens with the public preview. Nothing is for sale here and this page sends nothing anywhere.</p>
+  <p class="fineprint">Everything you type stays in this browser's local storage. There is no account, no server call, and no analytics on this page. Clearing the case clears it.</p>
+</footer>
+
+<script type="module" src="./app.js"></script>
+</body>
+</html>

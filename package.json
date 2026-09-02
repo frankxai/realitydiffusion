@@ -1,0 +1,23 @@
+{
+  "name": "realitydiffusion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reality Check: a local-only evidence protocol for assessing synthetic or manipulated media.",
+  "type": "module",
+  "license": "SEE LICENSE IN LICENSE",
+  "exports": {
+    ".": "./src/index.js",
+    "./schema": "./src/schema/types.js",
+    "./schema.json": "./src/schema/reality-check.v1.schema.json"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "verify": "node --test test/*.test.js",
+    "build": "node scripts/build-site.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

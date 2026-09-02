@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://realitydiffusion.ai/schema/reality-check.v1.schema.json",
+  "title": "RealityCheck.v1",
+  "description": "A local-only evidence record for assessing whether a piece of media is synthetic or manipulated. The record never asserts certainty and never carries the media itself.",
+  "type": "object",
+  "required": ["schema", "id", "createdAt", "updatedAt", "capture", "sources", "observations", "claims", "reviewers", "decision", "versions"],
+  "additionalProperties": false,
+  "properties": {
+    "schema": { "const": "RealityCheck.v1" },
+    "id": { "$ref": "#/$defs/id" },
+    "title": { "type": "string", "maxLength": 200 },
+    "createdAt": { "type": "string", "format": "date-time" },
+    "updatedAt": { "type": "string", "format": "date-time" },
+    "capture": { "$ref": "#/$defs/CaptureContext" },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/EvidenceItem" } },
+    "sources": { "type": "array", "items": { "$ref": "#/$defs/Source" } },
+    "observations": { "type": "array", "items": { "$ref": "#/$defs/Observation" } },
+    "toolResults": { "type": "array", "items": { "$ref": "#/$defs/ToolResult" } },
+    "claims": { "type": "array", "items": { "$ref": "#/$defs/Claim" }, "minItems": 1 },
+    "reviewers": { "type": "array", "items": { "$ref": "#/$defs/Reviewer" } },
+    "decision": { "$ref": "#/$defs/Decision" },
+    "versions": { "type": "array", "items": { "$ref": "#/$defs/ReportVersion" }, "minItems": 1 }
+  },
+  "$defs": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_-]{0,63}$" },
+    "nodeMeta": {
+      "type": "object",
+      "description": "Every node carries owner, provenance, version and visibility. Evaluation rules live on the node type that is evaluated (Indicator, Claim).",
+      "required": ["owner", "provenance", "version", "visibility"],
+      "additionalProperties": false,
+      "properties": {
+        "owner": { "type": "string", "description": "Who is answerable for this node. 'reviewer:<id>' for human entries, 'catalog:reality-diffusion' for shipped data." },
+        "provenance": {
+          "type": "string",
+          "enum": ["reviewer-entered", "catalog", "tool-reported", "third-party-claim", "derived"],
+          "description": "How the node came to exist. 'derived' means the engine computed it from other nodes."
+        },
+        "version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+        "visibility": { "type": "string", "enum": ["private", "report", "public"], "description": "private stays in the browser, report is included in an export, public may be published." }
+      }
+    },
+    "EvidenceItem": {
+      "type": "object",
+      "description": "A referenced piece of media. Reality Check never stores, uploads or hashes the media itself; only what the reviewer records about it.",
+      "required": ["id", "kind", "descriptor", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "type": "string", "enum": ["image", "video", "audio", "text", "document", "composite"] },
+        "descriptor": { "type": "string", "maxLength": 500, "description": "Reviewer's plain description. Not a filename, not a URL to the asset." },
+        "locator": { "type": ["string", "null"], "maxLength": 500, "description": "Optional public page where the item was seen. Never a private path." },
+        "firstSeenAt": { "type": ["string", "null"], "format": "date-time" },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "CaptureContext": {
+      "type": "object",
+      "description": "What the reviewer knows about how and where the media surfaced. Absence of a field is itself evidence and is recorded as 'unknown', never as false.",
+      "required": ["id", "surfacedOn", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "surfacedOn": { "type": "string", "maxLength": 200, "description": "Platform or channel where the reviewer met the media." },
+        "claimedOrigin": { "type": ["string", "null"], "maxLength": 300, "description": "What the poster says the media is." },
+        "claimedCapturedAt": { "type": ["string", "null"] },
+        "chainOfCustody": { "type": "string", "enum": ["direct-from-source", "one-hop", "multi-hop", "unknown"], "default": "unknown" },
+        "recompression": { "type": "string", "enum": ["none-known", "platform-reencoded", "screenshot-of-screen", "unknown"], "default": "unknown" },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Source": {
+      "type": "object",
+      "description": "An external reference the reviewer consulted: an article, an official record, a reverse-search hit, a person.",
+      "required": ["id", "kind", "label", "independence", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "kind": { "type": "string", "enum": ["publication", "official-record", "platform-page", "person", "archive", "reverse-search", "other"] },
+        "label": { "type": "string", "maxLength": 300 },
+        "locator": { "type": ["string", "null"], "maxLength": 500 },
+        "independence": { "type": "string", "enum": ["independent", "shares-origin", "unknown"], "description": "Two sources that trace to the same upstream post are one source." },
+        "accessedAt": { "type": ["string", "null"], "format": "date-time" },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Indicator": {
+      "type": "object",
+      "description": "A catalogued thing a reviewer can look for. An Indicator is a question, not a verdict. Its evaluationRule states exactly what makes it observed, and its alternatives list the innocent explanations that must be carried forward.",
+      "required": ["id", "family", "appliesTo", "question", "direction", "weight", "evaluationRule", "alternatives", "teaching", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "family": { "type": "string", "enum": ["provenance", "metadata", "distribution", "content", "signal", "corroboration"] },
+        "basis": { "type": "string", "enum": ["presence", "absence"], "default": "presence", "description": "Whether observing this indicator means finding something or failing to find something. A claim standing only on absences is capped by the engine." },
+        "appliesTo": { "type": "array", "items": { "type": "string", "enum": ["image", "video", "audio", "text", "document", "composite"] }, "minItems": 1 },
+        "question": { "type": "string", "maxLength": 300 },
+        "direction": { "type": "string", "enum": ["toward-synthetic", "toward-authentic"], "description": "Which way an observation of this indicator leans. It never decides alone." },
+        "weight": { "type": "integer", "minimum": 1, "maximum": 3, "description": "1 suggestive, 2 notable, 3 strong. No indicator is worth more than 3, so no single indicator can carry a claim." },
+        "evaluationRule": { "type": "string", "maxLength": 400, "description": "The condition under which a reviewer may mark this observed. Written so two reviewers agree." },
+        "alternatives": { "type": "array", "items": { "type": "string", "maxLength": 300 }, "minItems": 1, "description": "Innocent explanations that produce the same observation." },
+        "teaching": { "type": "string", "maxLength": 600 },
+        "failureModes": { "type": "array", "items": { "type": "string" } },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Observation": {
+      "type": "object",
+      "description": "A reviewer's answer to one Indicator for one EvidenceItem. 'unknown' and 'not-applicable' are first-class answers and are never treated as absence of concern.",
+      "required": ["id", "indicatorId", "evidenceId", "state", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "indicatorId": { "type": "string" },
+        "evidenceId": { "type": "string" },
+        "state": { "type": "string", "enum": ["observed", "absent", "unknown", "not-applicable"] },
+        "note": { "type": "string", "maxLength": 1000 },
+        "sourceIds": { "type": "array", "items": { "type": "string" } },
+        "toolResultIds": { "type": "array", "items": { "type": "string" } },
+        "recordedAt": { "type": ["string", "null"], "format": "date-time" },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "ToolResult": {
+      "type": "object",
+      "description": "Something an external tool reported, entered by hand. A ToolResult is a third-party claim, not a measurement Reality Diffusion made or can vouch for.",
+      "required": ["id", "tool", "reported", "calibration", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "tool": { "type": "string", "maxLength": 200 },
+        "toolVersion": { "type": ["string", "null"], "maxLength": 60 },
+        "reported": { "type": "string", "maxLength": 500, "description": "Verbatim what the tool said." },
+        "calibration": {
+          "type": "string",
+          "enum": ["published-benchmark", "vendor-claim-only", "unknown"],
+          "description": "Whether the tool's error rate on media like this is published. 'vendor-claim-only' and 'unknown' cap how far the result can move a claim."
+        },
+        "benchmarkRef": { "type": ["string", "null"], "maxLength": 300 },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "AlternativeExplanation": {
+      "type": "object",
+      "description": "A non-synthetic account of the same observations. Every claim must carry at least one, and each must be marked as still-open or ruled out with a reason.",
+      "required": ["id", "statement", "status", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "statement": { "type": "string", "maxLength": 400 },
+        "status": { "type": "string", "enum": ["open", "weakened", "ruled-out"] },
+        "reason": { "type": "string", "maxLength": 600, "description": "Required to move off 'open'." },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Confidence": {
+      "type": "object",
+      "description": "A derived, banded lean. There is no 'certain' band and no boolean. Produced only by the evidence engine.",
+      "required": ["band", "lean", "score", "cap", "capReason", "residualDoubt"],
+      "additionalProperties": false,
+      "properties": {
+        "band": { "type": "string", "enum": ["indeterminate", "weak", "moderate", "substantial"] },
+        "lean": { "type": "string", "enum": ["toward-synthetic", "toward-authentic", "conflicting", "none"] },
+        "score": { "type": "number", "minimum": -1, "maximum": 1 },
+        "cap": { "type": "string", "enum": ["indeterminate", "weak", "moderate", "substantial"] },
+        "capReason": { "type": "string", "maxLength": 300 },
+        "residualDoubt": { "type": "string", "maxLength": 400, "description": "What would still have to be true for this lean to be wrong. Never empty." },
+        "breadth": { "type": "object", "additionalProperties": false, "properties": {
+          "familiesObserved": { "type": "integer", "minimum": 0 },
+          "observationsUsed": { "type": "integer", "minimum": 0 },
+          "unknownCount": { "type": "integer", "minimum": 0 }
+        }}
+      }
+    },
+    "Claim": {
+      "type": "object",
+      "description": "A specific, falsifiable statement under test. 'This is AI' is not a claim; 'this photograph was not taken at the place and time stated' is.",
+      "required": ["id", "statement", "evidenceIds", "observationIds", "alternatives", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "statement": { "type": "string", "maxLength": 400 },
+        "evidenceIds": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+        "observationIds": { "type": "array", "items": { "type": "string" } },
+        "alternatives": { "type": "array", "items": { "$ref": "#/$defs/AlternativeExplanation" }, "minItems": 1 },
+        "confidence": { "$ref": "#/$defs/Confidence" },
+        "falsifier": { "type": "string", "maxLength": 400, "description": "The single piece of evidence that would settle this claim if it could be obtained." },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Reviewer": {
+      "type": "object",
+      "description": "A person accountable for entries. Held locally; excluded from an export unless visibility is 'report'.",
+      "required": ["id", "handle", "role", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "handle": { "type": "string", "maxLength": 120 },
+        "role": { "type": "string", "enum": ["primary", "second-reviewer", "subject-matter", "observer"] },
+        "declaredInterest": { "type": ["string", "null"], "maxLength": 300, "description": "Any stake the reviewer has in the outcome." },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "Decision": {
+      "type": "object",
+      "description": "What the reviewer will do next. Deliberately about action, not truth: 'publish', 'hold', 'seek more evidence'.",
+      "required": ["id", "disposition", "rationale", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "disposition": { "type": "string", "enum": ["insufficient-evidence", "seek-more-evidence", "hold-do-not-publish", "publish-with-caveats", "escalate-to-specialist"] },
+        "rationale": { "type": "string", "maxLength": 1000 },
+        "nextEvidenceSought": { "type": "array", "items": { "type": "string", "maxLength": 300 } },
+        "decidedBy": { "type": ["string", "null"] },
+        "decidedAt": { "type": ["string", "null"], "format": "date-time" },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    },
+    "ReportVersion": {
+      "type": "object",
+      "description": "An append-only entry. A Reality Check report is versioned because evidence arrives after publication.",
+      "required": ["version", "at", "summary", "meta"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "integer", "minimum": 1 },
+        "at": { "type": "string", "format": "date-time" },
+        "summary": { "type": "string", "maxLength": 300 },
+        "supersedes": { "type": ["integer", "null"] },
+        "meta": { "$ref": "#/$defs/nodeMeta" }
+      }
+    }
+  }
+}
